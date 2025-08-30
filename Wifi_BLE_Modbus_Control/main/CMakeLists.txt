@@ -1,2 +1,4 @@
-idf_component_register(SRCS "ble_spp_server_demo.c"
-                    INCLUDE_DIRS ".")
+set(srcs "main.c")
+
+idf_component_register(SRCS "waveshare.c" "modbus_master.c" "${srcs}"
+                       INCLUDE_DIRS ".")

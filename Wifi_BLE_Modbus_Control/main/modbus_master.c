@@ -117,15 +117,16 @@ static uint16_t crc16_modbus(const uint8_t *buf, int len)
 
 static inline void rs485_tx_enable(modbus_rtu_master_handle_t h, bool enable)
 {
-    if (h->cfg.de_re_pin >= 0) {
-        gpio_set_level(h->cfg.de_re_pin, enable ? 1 : 0);
-    }
+    // if (h->cfg.de_re_pin >= 0) {
+    //  //   gpio_set_level(h->cfg.de_re_pin, enable ? 1 : 0);
+    // }
 }
 
-static esp_err_t send_and_recv(modbus_rtu_master_handle_t h, const uint8_t *pdu, int pdu_len, uint8_t *rx, int rx_len, int *out_len)
+static esp_err_t send_and_recv(modbus_rtu_master_handle_t h, const uint8_t *pdu, int pdu_len_1, uint8_t *rx, int rx_len, int *out_len)
 {
     // Build ADU: [Addr][PDU...][CRC_L][CRC_H]
     uint8_t txbuf[256];
+    int  pdu_len = pdu_len_1;
     if (pdu_len + 3 > sizeof(txbuf)) return ESP_ERR_NO_MEM;
     memcpy(txbuf, pdu, pdu_len);
     uint16_t crc = crc16_modbus(txbuf, pdu_len);

@@ -59,7 +59,6 @@ extern command_t command_table[70];
 
 
 
-
 void wsh_operate_single_relay(uint8_t _device_add, uint8_t _relay_num, uint8_t _status);
 
 void wsh_operate_multiple_relay(uint8_t _device_add, uint16_t  _masked_relay_num, uint8_t _status);

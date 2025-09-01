@@ -96,7 +96,7 @@ const int button_mask[70][2] = {
     { 0, (1<<19)},                           // R52
     { 0, (1<<20)},                           // R53
     { 0, (1<<21)},                           // R54
-    {0xFFFFFFFF, 0xFFFFFFFF} // all model light
+    {0xFFFFFFFF, 0xFFFFFFFF}, // all model light,
 };
 
 uint8_t get_device_add();

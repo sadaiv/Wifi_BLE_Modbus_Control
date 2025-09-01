@@ -16,8 +16,13 @@
 #include "services/gatt/ble_svc_gatt.h"
 #include "ble_spp_server.h"
 #include "driver/uart.h"
+#include "wifi_server.h"
 #include "waveshare.h"
 #include "modbus_master.h"
+#include "esp_spiffs.h"
+#include "esp_spiffs.h"
+
+
 
 
 static int ble_spp_server_gap_event(struct ble_gap_event *event, void *arg);
@@ -28,6 +33,18 @@ static bool conn_handle_subs[CONFIG_BT_NIMBLE_MAX_CONNECTIONS + 1];
 static uint16_t ble_spp_svc_gatt_read_val_handle;
 
 void ble_store_config_init(void);
+
+
+void init_fs(void) {
+    esp_vfs_spiffs_conf_t conf = {
+        .base_path = "/spiffs",
+        .partition_label = NULL,
+        .max_files = 5,
+        .format_if_mount_failed = true
+    };
+    ESP_ERROR_CHECK(esp_vfs_spiffs_register(&conf));
+}
+
 
 /**
  * Logs information about a connection to the console.
@@ -93,7 +110,7 @@ ble_spp_server_advertise(void)
     fields.tx_pwr_lvl_is_present = 1;
     fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
 
-    name = ble_svc_gap_device_name();
+    name = "RCP_Ghansoli_Demo";
     fields.name = (uint8_t *)name;
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
@@ -434,19 +451,34 @@ static void ble_spp_uart_init(void)
     xTaskCreate(ble_server_uart_task, "uTask", 4096, (void *)UART_NUM_0, 8, NULL);
 }
 
+static void init_spiffs(void)
+{
+    esp_vfs_spiffs_conf_t conf = {
+        .base_path = "/spiffs",
+        .partition_label = NULL,
+        .max_files = 5,
+        .format_if_mount_failed = true
+    };
 
+    esp_err_t ret = esp_vfs_spiffs_register(&conf);
+    if (ret != ESP_OK) {
+        ESP_LOGE("SPIFFS", "Failed to mount or format filesystem: %s", esp_err_to_name(ret));
+    } else {
+        size_t total = 0, used = 0;
+        esp_spiffs_info(NULL, &total, &used);
+        ESP_LOGI("SPIFFS", "Partition size: total: %d, used: %d", total, used);
+    }
+} 
 void app_main(void)
 {
     int rc;
 
     /* Initialize NVS — it is used to store PHY calibration data */
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
-
+    esp_err_t ret;
+    ESP_ERROR_CHECK(nvs_flash_init());
+    init_spiffs();   
+    //init_fs();
+    
     ret = nimble_port_init();
     if (ret != ESP_OK) {
         MODLOG_DFLT(ERROR, "Failed to init nimble %d \n", ret);
@@ -498,6 +530,11 @@ void app_main(void)
     xTaskCreate( modbus_task, "MODBUS_TASK", 4096, NULL , tskIDLE_PRIORITY, &modbusTaskHandle );
     //configASSERT( xHandle );
 
+        // Init WiFi (AP + STA)
+    wifi_init_softap();
+
+    // Start HTTP server
+    start_webserver(); 
 
     nimble_port_freertos_init(ble_spp_server_host_task);
 }

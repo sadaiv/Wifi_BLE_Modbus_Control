@@ -3,88 +3,162 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ESP32 Demo</title>
+<title>ESP32 Setup</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
-:root { --maxw: 720px; }
-* { box-sizing: border-box; }
-html, body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", sans-serif; }
-body { display: grid; min-height: 100vh; background: #f6f7fb; }
-header { position: sticky; top: 0; backdrop-filter: blur(6px); background: rgba(255,255,255,.7); border-bottom: 1px solid #eaeaea; }
-.bar { max-width: var(--maxw); margin: 0 auto; padding: .9rem 1rem; display:flex; align-items:center; gap:.75rem; }
-.logo { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg,#3b82f6,#06b6d4); }
-h1 { font-size: 1.1rem; margin: 0; font-weight: 650; }
-
-
-main { max-width: var(--maxw); width: 100%; margin: 1rem auto 2rem; padding: 0 1rem; }
-.grid { display: grid; gap: 1rem; grid-template-columns: repeat(12, 1fr); }
-.card { grid-column: 1 / -1; background: #fff; border: 1px solid #eaeaea; border-radius: 16px; padding: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
-.row { display:flex; flex-wrap:wrap; gap:.75rem; align-items:center; }
-.grow { flex: 1 1 auto; }
-.muted { color:#666; font-size:.92rem; }
-
-
-button { border: 0; border-radius: 999px; padding: .6rem 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
-.solid { background:#111827; color:#fff; }
-.ghost { background:#f3f4f6; }
-.pill { background:#eef2ff; color:#3730a3; padding:.25rem .6rem; border-radius:999px; font-size:.8rem; font-weight:700; }
-
-
-@media (min-width: 620px) {
-.card.half { grid-column: span 6; }
-}
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f3f4f6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 1rem;
+  }
+  .card {
+    background-color: #ffffff;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 28rem;
+  }
 </style>
 </head>
 <body>
-<header>
-<div class="bar">
-<div class="logo" aria-hidden="true"></div>
-<h1>ESP32 Demo</h1>
-<span id="chip" class="pill" title="Chip model"></span>
+<div class="card space-y-6">
+  <div class="flex items-center space-x-4">
+    <div class="flex-shrink-0 w-12 h-12 bg-indigo-500 rounded-full flex items-center justify-center text-white">
+      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18.75l-6-6-6 6M6 9.75l6-6 6 6m-6 6L6 9.75l6-6"></path>
+      </svg>
+    </div>
+    <div>
+      <h1 class="text-3xl font-extrabold text-gray-900">ESP32 Setup</h1>
+      <p class="text-gray-500">Configure your device's Wi-Fi.</p>
+    </div>
+  </div>
+
+  <div id="status-display" class="bg-gray-100 p-4 rounded-xl text-center">
+    <p class="text-lg font-semibold text-gray-700 mb-1">Status:</p>
+    <p id="wifi-status" class="text-xl font-bold text-gray-800">Checking...</p>
+    <p id="ip-address" class="text-sm text-gray-500"></p>
+    <p id="custom-status" class="text-sm text-gray-500"></p>
+  </div>
+  
+  <div id="setup-form" class="space-y-4">
+    <h2 class="text-xl font-bold text-gray-800">Connect to Wi-Fi</h2>
+    <form id="connect-form" class="space-y-4">
+      <div>
+        <label for="ssid" class="block text-sm font-medium text-gray-700">Select Network</label>
+        <div class="mt-1 relative">
+          <select id="ssid" name="ssid" class="block w-full px-4 py-2 text-base text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 appearance-none">
+            <option value="">Scanning for networks...</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+        <input type="password" id="password" name="password" class="mt-1 block w-full px-4 py-2 text-base text-gray-900 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Enter password" />
+      </div>
+      <div>
+        <button type="submit" class="w-full px-4 py-3 text-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105">
+          Connect
+        </button>
+      </div>
+    </form>
+  </div>
+
 </div>
-</header>
-
-
-<main>
-<section class="grid">
-<article class="card half">
-<h3>Device Info</h3>
-<p class="muted" id="info">Loading…</p>
-<div class="row">
-<button class="ghost" onclick="refreshInfo()">Refresh</button>
-</div>
-</article>
-
-
-<article class="card half">
-<h3>GPIO Control</h3>
-<p class="muted">Toggle the built‑in LED (GPIO 2 on many boards).</p>
-<div class="row">
-<div class="grow"></div>
-<button class="solid" onclick="setLed(1)">ON</button>
-<button class="ghost" onclick="setLed(0)">OFF</button>
-</div>
-<p id="ledStatus" class="muted" style="margin-top:.5rem">LED: unknown</p>
-</article>
-</section>
-</main>
-
 
 <script>
-async function refreshInfo(){
-try{
-const r = await fetch('/api/info');
-const j = await r.json();
-document.querySelector('#chip').textContent = j.model || 'ESP32';
-document.querySelector('#info').textContent = `Heap: ${j.heap_free} bytes • SDK: ${j.idf}`;
-}catch(e){ document.querySelector('#info').textContent = 'Failed to load'; }
-}
-async function setLed(state){
-try{
-const r = await fetch(`/api/gpio?pin=2&state=${state}`);
-const j = await r.json();
-document.querySelector('#ledStatus').textContent = `LED: ${j.state ? 'ON' : 'OFF'}`;
-}catch(e){ document.querySelector('#ledStatus').textContent = 'LED: error'; }
-}
-refreshInfo();
+  const statusEl = document.getElementById('wifi-status');
+  const ipEl = document.getElementById('ip-address');
+  const customStatusEl = document.getElementById('custom-status');
+  const setupFormEl = document.getElementById('setup-form');
+  const connectFormEl = document.getElementById('connect-form');
+  const ssidSelectEl = document.getElementById('ssid');
+  const passwordInputEl = document.getElementById('password');
+
+  async function fetchStatus() {
+    try {
+      const response = await fetch('/api/status_info');
+      const data = await response.json();
+      
+      statusEl.textContent = data.wifi_status === 'connected' ? 'Connected!' : 'Disconnected (Captive Portal)';
+      statusEl.className = `text-xl font-bold text-gray-800 ${data.wifi_status === 'connected' ? 'text-green-600' : 'text-yellow-500'}`;
+      ipEl.textContent = data.ip_address ? `IP: ${data.ip_address}` : '';
+      customStatusEl.textContent = `Custom Status: ${data.custom_status || 'None'}`;
+
+      if (data.wifi_status === 'connected') {
+        setupFormEl.classList.add('hidden');
+      } else {
+        setupFormEl.classList.remove('hidden');
+      }
+    } catch (e) {
+      statusEl.textContent = 'Error fetching status';
+      statusEl.className = 'text-xl font-bold text-red-600';
+    }
+  }
+
+  async function fetchNetworks() {
+    try {
+      ssidSelectEl.innerHTML = '<option value="">Scanning...</option>';
+      const response = await fetch('/api/networks');
+      const data = await response.json();
+      
+      ssidSelectEl.innerHTML = '<option value="">-- Select a network --</option>';
+      data.networks.forEach(network => {
+        const option = document.createElement('option');
+        option.value = network.ssid;
+        option.textContent = `${network.ssid} (${network.rssi} dBm)`;
+        ssidSelectEl.appendChild(option);
+      });
+    } catch (e) {
+      ssidSelectEl.innerHTML = '<option value="">Error scanning networks</option>';
+    }
+  }
+
+  connectFormEl.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const ssid = ssidSelectEl.value;
+    const password = passwordInputEl.value;
+    
+    statusEl.textContent = 'Connecting...';
+    statusEl.className = 'text-xl font-bold text-blue-500';
+    ipEl.textContent = '';
+    
+    try {
+      const response = await fetch('/api/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}`
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        // Wait for the connection to be established and the IP to be assigned
+        const checkConnection = setInterval(async () => {
+          await fetchStatus();
+          const currentStatus = statusEl.textContent;
+          if (currentStatus.includes('Connected') || currentStatus.includes('Error')) {
+            clearInterval(checkConnection);
+          }
+        }, 2000);
+      }
+    } catch (e) {
+      statusEl.textContent = 'Connection failed, please try again.';
+      statusEl.className = 'text-xl font-bold text-red-600';
+    }
+  });
+
+  // Initial fetch and periodic updates
+  fetchNetworks();
+  setInterval(fetchStatus, 3000);
 </script>
+</body>
 </html>

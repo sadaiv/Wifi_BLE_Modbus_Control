@@ -12,4 +12,6 @@ esp_err_t start_webserver(void);
 // Stop HTTP server
 void stop_webserver(void);
 
+
+void start_dns_server(void);
 #endif

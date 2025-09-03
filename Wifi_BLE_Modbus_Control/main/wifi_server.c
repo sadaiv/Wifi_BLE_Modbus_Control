@@ -193,6 +193,35 @@ esp_err_t connect_post_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
+static esp_err_t cmd_post_handler(httpd_req_t *req)
+{
+    char buf[128];
+    int remaining = req->content_len;
+    int to_read = remaining < (sizeof(buf) - 1) ? remaining : (sizeof(buf) - 1);
+
+    int received = httpd_req_recv(req, buf, to_read);
+    if (received <= 0) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to read body");
+        return ESP_FAIL;
+    }
+    buf[received] = '\0';
+
+    ESP_LOGI("API", "Received command body: %s", buf);
+
+    // Example: URL-encoded commands like cmd=LED_ON
+    if (strstr(buf, "cmd=LED_ON")) {
+       // gpio_set_level(GPIO_NUM_2, 1);
+    } else if (strstr(buf, "cmd=LED_OFF")) {
+      //  gpio_set_level(GPIO_NUM_2, 0);
+    }
+
+    // Respond with JSON
+    const char *resp = "{\"status\":\"ok\",\"message\":\"Command executed\"}";
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_send(req, resp, strlen(resp));
+    return ESP_OK;
+}
+
 
 /* ===== Webserver ===== */
 httpd_handle_t start_webserver(void)
@@ -222,6 +251,14 @@ httpd_handle_t start_webserver(void)
     .user_ctx = NULL
 };
         httpd_register_uri_handler(server, &connect_uri);
+
+        httpd_uri_t cmd_uri = {
+    .uri = "/api/cmd",
+    .method = HTTP_POST,
+    .handler = cmd_post_handler,
+    .user_ctx = NULL
+};
+httpd_register_uri_handler(server, &cmd_uri);
     }
     return server;
 }

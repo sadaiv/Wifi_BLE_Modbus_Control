@@ -16,6 +16,10 @@ static char sta_ip_str[16] = "0.0.0.0";
 static bool wifi_connected = false;
 static char custom_status[32] = "Idle";
 
+
+extern QueueHandle_t bleCommandQue;
+
+
 /* ===== Helpers ===== */
 static void wifi_event_handler(void* arg, esp_event_base_t event_base,
                                int32_t event_id, void* event_data)
@@ -208,12 +212,8 @@ static esp_err_t cmd_post_handler(httpd_req_t *req)
 
     ESP_LOGI("API", "Received command body: %s", buf);
 
-    // Example: URL-encoded commands like cmd=LED_ON
-    if (strstr(buf, "cmd=LED_ON")) {
-       // gpio_set_level(GPIO_NUM_2, 1);
-    } else if (strstr(buf, "cmd=LED_OFF")) {
-      //  gpio_set_level(GPIO_NUM_2, 0);
-    }
+    xQueueSend(bleCommandQue, (void*)buf, (TickType_t)10);
+  
 
     // Respond with JSON
     const char *resp = "{\"status\":\"ok\",\"message\":\"Command executed\"}";
@@ -299,9 +299,15 @@ void wifi_init_softap(void)
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &ap_config));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config));
+   // ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config));
 
     ESP_ERROR_CHECK(esp_wifi_start());
+
+     if (esp_wifi_get_config(WIFI_IF_STA, &sta_config) == ESP_OK &&
+        strlen((char*)sta_config.sta.ssid)) {
+        ESP_LOGI(TAG, "Auto-connecting to saved SSID: %s", sta_config.sta.ssid);
+        esp_wifi_connect();
+    }
 
     ESP_LOGI(TAG, "Wi-Fi started. AP SSID: ESP32-Setup, Password: 12345678");
 }

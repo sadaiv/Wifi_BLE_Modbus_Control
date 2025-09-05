@@ -230,7 +230,7 @@ httpd_handle_t start_webserver(void)
     httpd_handle_t server = NULL;
 
     if (httpd_start(&server, &config) == ESP_OK) {
-                httpd_uri_t root = {
+            httpd_uri_t root = {
             .uri = "/",
             .method = HTTP_GET,
             .handler = root_get_handler,
@@ -250,9 +250,8 @@ httpd_handle_t start_webserver(void)
     .handler = connect_post_handler,
     .user_ctx = NULL
 };
-        httpd_register_uri_handler(server, &connect_uri);
-
-        httpd_uri_t cmd_uri = {
+    httpd_register_uri_handler(server, &connect_uri);
+    httpd_uri_t cmd_uri = {
     .uri = "/api/cmd",
     .method = HTTP_POST,
     .handler = cmd_post_handler,
@@ -285,14 +284,14 @@ void wifi_init_softap(void)
     // Configure AP
     wifi_config_t ap_config = {
         .ap = {
-            .ssid = "ESP32-Setup",
-            .ssid_len = strlen("ESP32-Setup"),
+            .ssid = "RCP_Ghansoli_Demo",
+            .ssid_len = strlen("RCP_Ghansoli_Demo"),
             .channel = 1,
             .max_connection = 4,
             .authmode = WIFI_AUTH_WPA_WPA2_PSK,
         },
     };
-    strcpy((char *)ap_config.ap.password, "12345678");
+    strcpy((char *)ap_config.ap.password, "RCP_Ghansoli@123");
 
     // Configure STA (empty for now, can be set later from captive portal form)
     wifi_config_t sta_config = {0};
@@ -309,5 +308,5 @@ void wifi_init_softap(void)
         esp_wifi_connect();
     }
 
-    ESP_LOGI(TAG, "Wi-Fi started. AP SSID: ESP32-Setup, Password: 12345678");
+    ESP_LOGI(TAG, "Wi-Fi started. AP SSID: %s, Password: %s",ap_config.ap.ssid, ap_config.ap.password);
 }

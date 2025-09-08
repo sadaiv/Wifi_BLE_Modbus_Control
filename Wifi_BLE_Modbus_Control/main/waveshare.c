@@ -9,6 +9,8 @@ QueueHandle_t bleCommandQue;
 const int  uxQueueLength = 10;
 const int  uxItemSize= 25;
 
+static int g_clear_on_off = 0;
+
 modbus_rtu_master_config_t cfg = {
         .uart_port   = UART_PORT,
         .baudrate    = 9600,
@@ -124,6 +126,7 @@ void modbus_task(void *pvParameters)
 {
     modbus_rtu_master_handle_t modbus_handle =  modbus_rtu_master_init(&cfg);
     bleCommandQue = xQueueCreate(uxQueueLength, uxItemSize);
+     device_add_t _prev_status = {0};
 
     while (1)
     {
@@ -137,25 +140,60 @@ void modbus_task(void *pvParameters)
             if ( sscanf(rxBuffer, "Button_%d", &_command_id) != 1)
             continue;
 
-            _status = button_operation_num(_command_id);
-           // device_add_t _status = button_operation_1();
-            for (int i = 0; i <2 ; i++)
+            if (_command_id < 65)
             {
-                if(_status._device_addresses[i] != 0)
+                _status = button_operation_num(_command_id);
+                // device_add_t _status = button_operation_1();
+                for (int i = 0; i < 2; i++)
                 {
-                    uint8_t _buf[11] = {0};
-                    uint8_t _res_buf[255];
-                    _buf[0] = _status._device_addresses[i];
-                    _buf[1] = 0x0f;
-                    _buf[2] = 0x00; _buf[3] =0x00; _buf[4] = 0x00;
-                    _buf[5] = 0x20; _buf[6]= 0x04;
-                    _buf[7] = (uint8_t) (( _status.relay_status_on_device[i] ) & 0xFF) ;
-                    _buf[8] = (uint8_t) (( _status.relay_status_on_device[i] >> 8  ) & 0xFF);
-                    _buf[9] = (uint8_t) (( _status.relay_status_on_device[i] >> 16 ) & 0xFF);
-                    _buf[10] =(uint8_t) (( _status.relay_status_on_device[i] >> 24)  & 0xFF);
-                    modbus_write_buffer(modbus_handle,_buf ,11, _res_buf);
-                    vTaskDelay(10);
-                }           
+                    if (_status._device_addresses[i] != 0)
+                    {
+                        uint8_t _buf[11] = {0};
+                        uint8_t _res_buf[255];
+                        _buf[0] = _status._device_addresses[i];
+                        _buf[1] = 0x0f;
+                        _buf[2] = 0x00;
+                        _buf[3] = 0x00;
+                        _buf[4] = 0x00;
+                        _buf[5] = 0x20;
+                        _buf[6] = 0x04;
+                        if (g_clear_on_off)
+                        {
+                           _status.relay_status_on_device[i] |= _prev_status.relay_status_on_device[i];
+                        }
+                            _buf[7] = (uint8_t)((_status.relay_status_on_device[i]) & 0xFF);
+                            _buf[8] = (uint8_t)((_status.relay_status_on_device[i] >> 8) & 0xFF);
+                            _buf[9] = (uint8_t)((_status.relay_status_on_device[i] >> 16) & 0xFF);
+                            _buf[10] = (uint8_t)((_status.relay_status_on_device[i] >> 24) & 0xFF);
+                       
+                        modbus_write_buffer(modbus_handle, _buf, 11, _res_buf);
+                        vTaskDelay(10);
+                    }
+                }
+                _prev_status = _status;
+            }
+            else if (_command_id < 70)
+            {
+                switch (_command_id)
+                {
+                    case 65: // music on 
+                     // add GPIO enable here 
+                    break;
+                    
+                    case 66: // music off 
+                    //  add GPIO disable off here
+                    break;
+
+                    case 67: //enable clear on command 
+                    g_clear_on_off = 1;
+                        
+                    break;
+
+                    case 68: //disble clear on command
+                    g_clear_on_off = 0;
+                    break;
+
+                }
             }
         // if (_status._relay_on_gateway)
         }         

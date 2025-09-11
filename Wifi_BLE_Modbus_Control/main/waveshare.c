@@ -172,7 +172,7 @@ void modbus_task(void *pvParameters)
                 }
                 _prev_status = _status;
             }
-            else if (_command_id < 70)
+            else if (_command_id < 69)
             {
                 switch (_command_id)
                 {

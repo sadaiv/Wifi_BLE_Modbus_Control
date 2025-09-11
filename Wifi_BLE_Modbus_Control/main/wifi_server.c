@@ -222,15 +222,71 @@ static esp_err_t cmd_post_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
+/* Utility: set correct MIME type based on file extension */
+static const char *get_content_type(const char *filename) {
+    if (strstr(filename, ".html")) return "text/html";
+    if (strstr(filename, ".css")) return "text/css";
+    if (strstr(filename, ".js")) return "application/javascript";
+    if (strstr(filename, ".svg")) return "image/svg";
+    if (strstr(filename, ".jpg")) return "image/jpeg";
+    if (strstr(filename, ".ico")) return "image/x-icon";
+    return "text/plain";
+}
+esp_err_t image_get_handler(httpd_req_t *req)
+{
+    char filepath[128];
+    const char *uri = req->uri;
+
+    // Remove "/image/" prefix
+    const char *filename = uri + strlen("/image/");
+
+    snprintf(filepath, sizeof(filepath), "/spiffs/%s", filename);
+
+    FILE *file = fopen(filepath, "r");
+    if (!file) {
+        ESP_LOGW("HTTP", "File not found: %s", filepath);
+        httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "File not found");
+        return ESP_FAIL;
+    }
+
+    // Detect content type
+    if (strstr(filename, ".svg")) {
+        httpd_resp_set_type(req, "image/svg+xml");
+    } else if (strstr(filename, ".png")) {
+        httpd_resp_set_type(req, "image/png");
+    } else if (strstr(filename, ".jpg") || strstr(filename, ".jpeg")) {
+        httpd_resp_set_type(req, "image/jpeg");
+    } else {
+        httpd_resp_set_type(req, "application/octet-stream");
+    }
+
+    // Send file in chunks
+    char chunk[512];
+    size_t read_bytes;
+    while ((read_bytes = fread(chunk, 1, sizeof(chunk), file)) > 0) {
+        if (httpd_resp_send_chunk(req, chunk, read_bytes) != ESP_OK) {
+            fclose(file);
+            ESP_LOGE("HTTP", "Send failed!");
+            httpd_resp_sendstr_chunk(req, NULL); // end response
+            return ESP_FAIL;
+        }
+    }
+
+    fclose(file);
+    httpd_resp_send_chunk(req, NULL, 0); // end response
+    return ESP_OK;
+}
 
 /* ===== Webserver ===== */
 httpd_handle_t start_webserver(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.uri_match_fn = httpd_uri_match_wildcard;   // enable wildcard
+
     httpd_handle_t server = NULL;
 
     if (httpd_start(&server, &config) == ESP_OK) {
-            httpd_uri_t root = {
+        httpd_uri_t root = {
             .uri = "/",
             .method = HTTP_GET,
             .handler = root_get_handler,
@@ -238,27 +294,46 @@ httpd_handle_t start_webserver(void)
         };
         httpd_register_uri_handler(server, &root);
 
-        httpd_uri_t status = { .uri="/api/status_info", .method=HTTP_GET, .handler=status_get_handler };
+        httpd_uri_t status = {
+            .uri = "/api/status_info",
+            .method = HTTP_GET,
+            .handler = status_get_handler
+        };
         httpd_register_uri_handler(server, &status);
 
-        httpd_uri_t networks = { .uri="/api/networks", .method=HTTP_GET, .handler=networks_get_handler };
+        httpd_uri_t networks = {
+            .uri = "/api/networks",
+            .method = HTTP_GET,
+            .handler = networks_get_handler
+        };
         httpd_register_uri_handler(server, &networks);
 
-       httpd_uri_t connect_uri = {
-    .uri = "/api/connect",
-    .method = HTTP_POST,
-    .handler = connect_post_handler,
-    .user_ctx = NULL
-};
-    httpd_register_uri_handler(server, &connect_uri);
-    httpd_uri_t cmd_uri = {
-    .uri = "/api/cmd",
-    .method = HTTP_POST,
-    .handler = cmd_post_handler,
-    .user_ctx = NULL
-};
-httpd_register_uri_handler(server, &cmd_uri);
+        httpd_uri_t connect_uri = {
+            .uri = "/api/connect",
+            .method = HTTP_POST,
+            .handler = connect_post_handler,
+            .user_ctx = NULL
+        };
+        httpd_register_uri_handler(server, &connect_uri);
+
+        httpd_uri_t cmd_uri = {
+            .uri = "/api/cmd",
+            .method = HTTP_POST,
+            .handler = cmd_post_handler,
+            .user_ctx = NULL
+        };
+        httpd_register_uri_handler(server, &cmd_uri);
+
+        // ✅ Only one httpd_start — now add image handler
+        httpd_uri_t static_files = {
+            .uri       = "/image/*",   // will match /image/RELIANCE.NS_BIG.png
+            .method    = HTTP_GET,
+            .handler   = image_get_handler,
+            .user_ctx  = NULL
+        };
+        httpd_register_uri_handler(server, &static_files);
     }
+
     return server;
 }
 

@@ -8,6 +8,7 @@
 #include "esp_netif.h"
 #include "esp_system.h"
 #include "esp_http_server.h"
+#include "esp_mac.h"
 
 
 static const char *TAG = "WEB";
@@ -15,6 +16,7 @@ static const char *TAG = "WEB";
 static char sta_ip_str[16] = "0.0.0.0";
 static bool wifi_connected = false;
 static char custom_status[32] = "Idle";
+static char current_ssid[60] = "";
 
 
 extern QueueHandle_t bleCommandQue;
@@ -34,6 +36,14 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
         snprintf(sta_ip_str, sizeof(sta_ip_str), IPSTR, IP2STR(&event->ip_info.ip));
         wifi_connected = true;
         ESP_LOGI(TAG, "Got IP: %s", sta_ip_str);
+        wifi_ap_record_t ap_info;
+        if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
+        ESP_LOGI(TAG, "Got IP: %s, SSID: %s", sta_ip_str, (char *)ap_info.ssid);
+        strncpy(current_ssid, (char *)ap_info.ssid, sizeof(current_ssid) - 1); // store for API
+        } 
+        else {
+        ESP_LOGI(TAG, "Got IP: %s (SSID unknown)", sta_ip_str);
+        }
     }
 }
 
@@ -71,11 +81,11 @@ static esp_err_t root_get_handler(httpd_req_t *req)
 
 static esp_err_t status_get_handler(httpd_req_t *req)
 {
-    char resp[128];
+    char resp[256];
     snprintf(resp, sizeof(resp),
-             "{\"wifi_status\":\"%s\",\"ip_address\":\"%s\",\"custom_status\":\"%s\"}",
-             wifi_connected ? "connected" : "disconnected",
-             sta_ip_str, custom_status);
+             "{\"wifi_status\":\"%s\",\"ip_address\":\"%s\",\"custom_status\":\"%s\", \"ssid\" : \"%s\"}",\
+             wifi_connected ? "connected" : "disconnected", \
+             sta_ip_str, custom_status, current_ssid);
     httpd_resp_set_type(req, "application/json");
     return httpd_resp_send(req, resp, HTTPD_RESP_USE_STRLEN);
 }

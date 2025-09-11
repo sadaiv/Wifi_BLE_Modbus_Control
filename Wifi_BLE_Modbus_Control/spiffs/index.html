@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ESP32 Setup</title>
+<title>RCP Ghansoli Demo </title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   body {
@@ -99,11 +99,15 @@
       
       statusEl.textContent = data.wifi_status === 'connected' ? 'Connected!' : 'Disconnected (Captive Portal)';
       statusEl.className = `text-xl font-bold text-gray-800 ${data.wifi_status === 'connected' ? 'text-green-600' : 'text-yellow-500'}`;
+      
       ipEl.textContent = data.ip_address ? `IP: ${data.ip_address}` : '';
-      customStatusEl.textContent = `Custom Status: ${data.custom_status || 'None'}`;
+      
+      // ✅ Show SSID info if available
+      customStatusEl.textContent = `SSID: ${data.ssid || 'Unknown'} | Status: ${data.custom_status || 'None'}`;
 
       if (data.wifi_status === 'connected') {
-        setupFormEl.classList.add('hidden');
+        // keep form visible for new connections
+        // setupFormEl.classList.add('hidden');
       } else {
         setupFormEl.classList.remove('hidden');
       }

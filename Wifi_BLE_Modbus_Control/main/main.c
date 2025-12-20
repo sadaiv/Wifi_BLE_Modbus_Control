@@ -38,6 +38,8 @@
 #include "esp_https_ota.h"
 #include "nvs.h"
 #include "nvs_flash.h"
+
+#include "relay_operations.h"
 #define OTADRIVE_APIKEY "bb1f3a8b-3e78-4447-9f58-6a955351ef93" 
 #define APP_VERSION "v@2.1.1.4"
 

@@ -5,6 +5,7 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+#include "driver/gpio.h"
 
 #define NUM_OF_MODBUS_DEVICES 2
 #define MODBUS_ADD_DEVICE_ONE 0x01
@@ -16,6 +17,9 @@
 #define RS485_DE_RE    4   // Connect to DE+RE (tie together). Set to -1 if using plain TTL w/o transceiver
 
 extern QueueHandle_t bleCommandQue;
+
+
+#define RELAY_1 GPIO_NUM_1 
 
 
 

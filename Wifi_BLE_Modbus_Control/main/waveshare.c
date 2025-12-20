@@ -3,7 +3,9 @@
 #include "memory.h"
 #include "host/util/util.h"
 #include "modbus_master.h"
-#include "relay_operations.h"
+
+#include "driver/gpio.h"
+
 
 
 QueueHandle_t bleCommandQue;
@@ -136,7 +138,7 @@ void modbus_task(void *pvParameters)
     {
         char rxBuffer[25] = {0};
         device_add_t _status = {0};
-        uint8_t _is_command_recvd =0;
+       // uint8_t _is_command_recvd =0;
         int _command_id=255;
                 
         if( xQueueReceive(bleCommandQue, &(rxBuffer), (TickType_t)500))
@@ -289,90 +291,90 @@ command_t command_table[70]=
 };
 
 
-device_add_t button_operation_1()
-{
+// device_add_t button_operation_1()
+// {
     
-    device_add_t _relay_status ={0};
-    uint32_t _relay_to_operate = 0;
+//     device_add_t _relay_status ={0};
+//     uint32_t _relay_to_operate = 0;
     
-    memset((uint8_t *)&_relay_status, 0, sizeof(device_add_t));
+//     memset((uint8_t *)&_relay_status, 0, sizeof(device_add_t));
 
-    _relay_status._has_multiple_devices=0;
-    _relay_status._is_modbus_device =0;
-    _relay_status._device_addresses[0] = MODBUS_ADD_DEVICE_ONE;
+//     _relay_status._has_multiple_devices=0;
+//     _relay_status._is_modbus_device =0;
+//     _relay_status._device_addresses[0] = MODBUS_ADD_DEVICE_ONE;
 
-    _relay_to_operate = _relay_to_operate  | BUTTON_1;
-    _relay_status.relay_status_on_device[0]= _relay_to_operate;
+//     _relay_to_operate = _relay_to_operate  | BUTTON_1;
+//     _relay_status.relay_status_on_device[0]= _relay_to_operate;
 
-    return _relay_status;
-}
+//     return _relay_status;
+// }
 
 
-device_add_t button_operation_2()
-{
+// device_add_t button_operation_2()
+// {
     
-    device_add_t _relay_status;
-    uint32_t _relay_to_operate = 0;
-    memset((uint8_t *)&_relay_status, 0, sizeof(device_add_t));
+//     device_add_t _relay_status;
+//     uint32_t _relay_to_operate = 0;
+//     memset((uint8_t *)&_relay_status, 0, sizeof(device_add_t));
 
-    _relay_status._has_multiple_devices=0;
-    _relay_status._is_modbus_device =0;
-    _relay_status._device_addresses[0] = MODBUS_ADD_DEVICE_TWO;
+//     _relay_status._has_multiple_devices=0;
+//     _relay_status._is_modbus_device =0;
+//     _relay_status._device_addresses[0] = MODBUS_ADD_DEVICE_TWO;
 
-    _relay_to_operate = _relay_to_operate  | BUTTON_2;
-    _relay_status.relay_status_on_device[0]= _relay_to_operate;
+//     _relay_to_operate = _relay_to_operate  | BUTTON_2;
+//     _relay_status.relay_status_on_device[0]= _relay_to_operate;
 
-    return _relay_status;
-}
+//     return _relay_status;
+// }
 
 
-device_add_t button_operation_3()
-{
+// device_add_t button_operation_3()
+// {
     
-    device_add_t _relay_status;
-    uint32_t _relay_to_operate = 0;
-    memset((uint8_t *)&_relay_status, 0, sizeof(device_add_t));
+//     device_add_t _relay_status;
+//     uint32_t _relay_to_operate = 0;
+//     memset((uint8_t *)&_relay_status, 0, sizeof(device_add_t));
 
-    _relay_status._has_multiple_devices=0;
-    _relay_status._is_modbus_device =0;
-    _relay_status._device_addresses[0] = MODBUS_ADD_DEVICE_ONE;
+//     _relay_status._has_multiple_devices=0;
+//     _relay_status._is_modbus_device =0;
+//     _relay_status._device_addresses[0] = MODBUS_ADD_DEVICE_ONE;
 
-    _relay_to_operate = _relay_to_operate  | BUTTON_3;
-    _relay_status.relay_status_on_device[0]= _relay_to_operate;
+//     _relay_to_operate = _relay_to_operate  | BUTTON_3;
+//     _relay_status.relay_status_on_device[0]= _relay_to_operate;
 
-    return _relay_status;
-}
+//     return _relay_status;
+// }
 
-device_add_t button_operation_4()
-{
+// device_add_t button_operation_4()
+// {
     
-    device_add_t _relay_status;
-    uint32_t _relay_to_operate = 0;
-    memset((uint8_t *)&_relay_status, 0, sizeof(device_add_t));
+//     device_add_t _relay_status;
+//     uint32_t _relay_to_operate = 0;
+//     memset((uint8_t *)&_relay_status, 0, sizeof(device_add_t));
 
-    _relay_status._has_multiple_devices=0;
-    _relay_status._is_modbus_device =0;
-    _relay_status._device_addresses[0] = MODBUS_ADD_DEVICE_ONE;
+//     _relay_status._has_multiple_devices=0;
+//     _relay_status._is_modbus_device =0;
+//     _relay_status._device_addresses[0] = MODBUS_ADD_DEVICE_ONE;
 
-    _relay_to_operate = _relay_to_operate  | BUTTON_4;
-    _relay_status.relay_status_on_device[0]= _relay_to_operate;
+//     _relay_to_operate = _relay_to_operate  | BUTTON_4;
+//     _relay_status.relay_status_on_device[0]= _relay_to_operate;
 
-    return _relay_status;
-}
+//     return _relay_status;
+// }
 
-device_add_t button_operation_5()
-{
+// device_add_t button_operation_5()
+// {
     
-    device_add_t _relay_status;
-    uint32_t _relay_to_operate = 0;
-    memset((uint8_t *)&_relay_status, 0, sizeof(device_add_t));
+//     device_add_t _relay_status;
+//     uint32_t _relay_to_operate = 0;
+//     memset((uint8_t *)&_relay_status, 0, sizeof(device_add_t));
 
-    _relay_status._has_multiple_devices=0;
-    _relay_status._is_modbus_device =0;
-    _relay_status._device_addresses[0] = MODBUS_ADD_DEVICE_ONE;
+//     _relay_status._has_multiple_devices=0;
+//     _relay_status._is_modbus_device =0;
+//     _relay_status._device_addresses[0] = MODBUS_ADD_DEVICE_ONE;
 
-    _relay_to_operate = _relay_to_operate  | BUTTON_5;
-    _relay_status.relay_status_on_device[0]= _relay_to_operate;
+//     _relay_to_operate = _relay_to_operate  | BUTTON_5;
+//     _relay_status.relay_status_on_device[0]= _relay_to_operate;
 
-    return _relay_status;
-}
+//     return _relay_status;
+// }

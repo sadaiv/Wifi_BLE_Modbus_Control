@@ -5,6 +5,7 @@
 #include "modbus_master.h"
 #include "relay_operations.h"
 
+
 QueueHandle_t bleCommandQue;
 const int  uxQueueLength = 10;
 const int  uxItemSize= 25;
@@ -29,7 +30,7 @@ const int button_mask[70][2] = {
     { (1<<0)  | (1<<1) | (1<<2),    0 },   // R1, R2, R3
     { (1<<0)  | (1<<1),             0 },   // R1, R2
     { (1<<0),                        0 },   // R1
-    { (1<<2),                        0 },   // R2
+    { (1<<1),                        0 },   // R2
     { (1<<3)  | (1<<4) | (1<<5),    0 },   // R4, R5, R6
     { (1<<4)  | (1<<5),             0 },   // R5, R6
     { (1<<5),                        0 },   // R6
@@ -41,7 +42,7 @@ const int button_mask[70][2] = {
       (1<<15) | (1<<16),            0 },   // R10..R17
     { (1<<9)  | (1<<10)| (1<<11),   0 },   // R10, R11, R12
     { (1<<11),                       0 },   // R12
-    { (1<<12) | (1<<14),            0 },   // R13, R14
+    { (1<<12) | (1<<13),            0 },   // R13, R14
     { (1<<14),                       0 },   // R15
     { (1<<15),                       0 },   // R16
     { (1<<16),                       0 },   // R17
@@ -55,7 +56,7 @@ const int button_mask[70][2] = {
     { (1<<27),              (1<<0) }, // R28, R33
     { (1<<28),              (1<<0) }, // R29, R33
     { (1<<30),                       0 },   // R31
-    { (1<<21)|(1<<17)|(1<<24)|(1<<29),0 }, // R23,18,25,30
+    { (1<<22)|(1<<17)|(1<<24)|(1<<29),0 }, // R23,18,25,30
     { (1<<18)|(1<<19)|(1<<20)|(1<<21)|
       (1<<22)|(1<<23)|(1<<24)|(1<<25)|
       (1<<26),                       0 },   // R19..R27
@@ -89,9 +90,9 @@ const int button_mask[70][2] = {
     { 0, (1<<28)},                           // R61
     { 0, (1<<29)},                           // R62
     { 0, (1<<30)},                           // R63
-    { 0, (1<<22)|(1<<23)|(1<<24)|(1<<25)|
-          (1<<26)|(1<<27)|(1<<28)|(1<<29)|
-          (1<<30)},                         // R55..R63
+    { 0, (1<<22)|(1<<23)|(1<<24)|(1<<25)|\
+          (1<<26)|(1<<27)|(1<<28)|(1<<29)},
+                  // R55..R63
     { 0, (1<<16)},                           // R49
     { 0, (1<<17)},                           // R50
     { 0, (1<<18)},                           // R51
@@ -99,6 +100,9 @@ const int button_mask[70][2] = {
     { 0, (1<<20)},                           // R53
     { 0, (1<<21)},                           // R54
     {0xFFFFFFFF, 0xFFFFFFFF}, // all model light,
+    {0, 1<<0}, 
+    {(1<<22)|(1<<17)|(1<<24), 0   },
+    { (1<<29), 0},
 };
 
 uint8_t get_device_add();
@@ -140,7 +144,7 @@ void modbus_task(void *pvParameters)
             if ( sscanf(rxBuffer, "Button_%d", &_command_id) != 1)
             continue;
 
-            if (_command_id < 65)
+            if (_command_id < 68)
             {
                 _status = button_operation_num(_command_id);
                 // device_add_t _status = button_operation_1();
@@ -161,10 +165,10 @@ void modbus_task(void *pvParameters)
                         {
                            _status.relay_status_on_device[i] |= _prev_status.relay_status_on_device[i];
                         }
-                            _buf[7] = (uint8_t)((_status.relay_status_on_device[i]) & 0xFF);
-                            _buf[8] = (uint8_t)((_status.relay_status_on_device[i] >> 8) & 0xFF);
-                            _buf[9] = (uint8_t)((_status.relay_status_on_device[i] >> 16) & 0xFF);
-                            _buf[10] = (uint8_t)((_status.relay_status_on_device[i] >> 24) & 0xFF);
+                        _buf[7] = (uint8_t)((_status.relay_status_on_device[i]) & 0xFF);
+                        _buf[8] = (uint8_t)((_status.relay_status_on_device[i] >> 8) & 0xFF);
+                        _buf[9] = (uint8_t)((_status.relay_status_on_device[i] >> 16) & 0xFF);
+                        _buf[10] = (uint8_t)((_status.relay_status_on_device[i] >> 24) & 0xFF);
                        
                         modbus_write_buffer(modbus_handle, _buf, 11, _res_buf);
                         vTaskDelay(10);
@@ -172,27 +176,26 @@ void modbus_task(void *pvParameters)
                 }
                 _prev_status = _status;
             }
-            else if (_command_id < 69)
+            else if (_command_id < 72)
             {
                 switch (_command_id)
                 {
-                    case 65: // music on 
+                    case 68: // music on 
                      // add GPIO enable here 
+                    gpio_set_level(RELAY_1, 1); // Set to HIGH
                     break;
                     
-                    case 66: // music off 
-                    //  add GPIO disable off here
+                    case 69: // music off 
+                    gpio_set_level(RELAY_1, 0); // Set to HIGH //  add GPIO disable off here
                     break;
 
-                    case 67: //enable clear on command 
-                    g_clear_on_off = 1;
-                        
+                    case 70: //enable clear on command 
+                    g_clear_on_off = 1;                        
                     break;
 
-                    case 68: //disble clear on command
+                    case 71: //disble clear on command
                     g_clear_on_off = 0;
                     break;
-
                 }
             }
         // if (_status._relay_on_gateway)

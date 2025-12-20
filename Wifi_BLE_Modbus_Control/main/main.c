@@ -21,8 +21,25 @@
 #include "modbus_master.h"
 #include "esp_spiffs.h"
 #include "esp_spiffs.h"
+#include "driver/gpio.h"
+#include <otadrive_esp.h>
 
-
+#include <string.h>
+#include <inttypes.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/event_groups.h"
+#include "esp_system.h"
+#include "esp_event.h"
+#include "esp_log.h"
+#include "esp_ota_ops.h"
+#include "esp_crt_bundle.h"
+#include "esp_http_client.h"
+#include "esp_https_ota.h"
+#include "nvs.h"
+#include "nvs_flash.h"
+#define OTADRIVE_APIKEY "bb1f3a8b-3e78-4447-9f58-6a955351ef93" 
+#define APP_VERSION "v@2.1.1.4"
 
 
 static int ble_spp_server_gap_event(struct ble_gap_event *event, void *arg);
@@ -34,7 +51,76 @@ static uint16_t ble_spp_svc_gatt_read_val_handle;
 
 void ble_store_config_init(void);
 
+static const char *TAG = "OTA";
+// ========================== OTA section
+static void otadrive_event_handler(void *arg, esp_event_base_t event_base,
+                                   int32_t event_id, void *event_data)
+{
+    if (event_base == ESP_HTTPS_OTA_EVENT)
+    {
+        switch (event_id)
+        {
+        case ESP_HTTPS_OTA_START:
+            ESP_LOGI(TAG, "OTA started");
+            break;
+        case ESP_HTTPS_OTA_CONNECTED:
+            ESP_LOGI(TAG, "Connected to server");
+            break;
+        case ESP_HTTPS_OTA_GET_IMG_DESC:
+            ESP_LOGI(TAG, "Reading Image Description");
+            break;
+        case ESP_HTTPS_OTA_VERIFY_CHIP_ID:
+            ESP_LOGI(TAG, "Verifying chip id of new image: %d", *(esp_chip_id_t *)event_data);
+            break;
+        case ESP_HTTPS_OTA_DECRYPT_CB:
+            ESP_LOGI(TAG, "Callback to decrypt function");
+            break;
+        case ESP_HTTPS_OTA_WRITE_FLASH:
+            ESP_LOGD(TAG, "Writing to flash: %d written", *(int *)event_data);
+            break;
+        case ESP_HTTPS_OTA_UPDATE_BOOT_PARTITION:
+            ESP_LOGI(TAG, "Boot partition updated. Next Partition: %d", *(esp_partition_subtype_t *)event_data);
+            break;
+        case ESP_HTTPS_OTA_FINISH:
+            ESP_LOGI(TAG, "OTA finish");
+            break;
+        case ESP_HTTPS_OTA_ABORT:
+            ESP_LOGI(TAG, "OTA abort");
+            break;
+        }
+    }
+}
+void otadrive_thread(void *pvParameter)
+{
+    while (1)
+    {
+        if (otadrive_timeTick(60*60))
+        {
+            otadrive_result r = otadrive_updateFirmwareInfo();
+            ESP_LOGI(TAG, "RES %d,%lu", r.code, r.size);
+            if (r.available)
+            {
+                ESP_LOGI(TAG, "Lets download new firmware %s,%luBytes. Current firmware is %s",
+                         r.version, r.size, otadrive_currentversion());
+                
+                // Note: this method blocks process for about 90 seconds. Be aware about your device operation.
+                r = otadrive_updateFirmware(false);
+                if(r.code == OTADRIVE_Success)
+                {
+                    // lets prepare device for reboot
+                    // shutdown something and kill other threads safely
+                    // ...
 
+                    // now reboot
+                    esp_restart();
+                    return;
+                }
+            }
+            //while(!(otadrive_timeTick(1484*60)));
+        }
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
 void init_fs(void) {
     esp_vfs_spiffs_conf_t conf = {
         .base_path = "/spiffs",
@@ -478,7 +564,16 @@ void app_main(void)
     ESP_ERROR_CHECK(nvs_flash_init());
     init_spiffs();   
     //init_fs();
-    
+    gpio_config_t io_conf = {
+        .pin_bit_mask = 1ULL << RELAY_1,
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE
+    };
+    gpio_config(&io_conf);
+    gpio_set_level(RELAY_1, 0); // Set to HIGH
+
     ret = nimble_port_init();
     if (ret != ESP_OK) {
         MODLOG_DFLT(ERROR, "Failed to init nimble %d \n", ret);
@@ -537,4 +632,9 @@ void app_main(void)
     start_webserver(); 
 
     nimble_port_freertos_init(ble_spp_server_host_task);
+
+     // initialize OTAdrive lib
+    esp_event_handler_register(OTADRIVE_EVENTS, ESP_EVENT_ANY_ID, &otadrive_event_handler, NULL); // Register a handler to get updates on progress
+    otadrive_setInfo(OTADRIVE_APIKEY, APP_VERSION);
+    xTaskCreate(&otadrive_thread, "otadrive_example_task", 1024 * 16, NULL, 5, NULL);
 }

@@ -20,6 +20,11 @@ extern QueueHandle_t bleCommandQue;
 
 
 #define RELAY_1 GPIO_NUM_1 
+#define RELAY_2 GPIO_NUM_2 
+#define RELAY_3 GPIO_NUM_41 
+#define RELAY_4 GPIO_NUM_42 
+#define RELAY_5 GPIO_NUM_45 
+#define RELAY_6 GPIO_NUM_46 
 
 
 

@@ -41,7 +41,7 @@
 
 #include "relay_operations.h"
 #define OTADRIVE_APIKEY "bb1f3a8b-3e78-4447-9f58-6a955351ef93" 
-#define APP_VERSION "v@2.1.1.5"
+#define APP_VERSION "v@2.1.1.9"
 
 
 static int ble_spp_server_gap_event(struct ble_gap_event *event, void *arg);
@@ -93,10 +93,12 @@ static void otadrive_event_handler(void *arg, esp_event_base_t event_base,
     }
 }
 void otadrive_thread(void *pvParameter)
-{
+{   
+    uint32_t  wait = 120;
+
     while (1)
     {
-        if (otadrive_timeTick(60*60))
+        if (otadrive_timeTick(wait))
         {
             otadrive_result r = otadrive_updateFirmwareInfo();
             ESP_LOGI(TAG, "RES %d,%lu", r.code, r.size);
@@ -118,9 +120,10 @@ void otadrive_thread(void *pvParameter)
                     return;
                 }
             }
-            //while(!(otadrive_timeTick(1484*60)));
+            //while(!(otadrive_timeTick(60*5)));
         }
         vTaskDelay(pdMS_TO_TICKS(1000));
+        wait = 60*15;
     }
 }
 void init_fs(void) {
@@ -567,7 +570,7 @@ void app_main(void)
     init_spiffs();   
     //init_fs();
     gpio_config_t io_conf = {
-        .pin_bit_mask = 1ULL << RELAY_1,
+        .pin_bit_mask = 1ULL << RELAY_1 | 1ULL << RELAY_2| 1ULL << RELAY_3| 1ULL << RELAY_4| 1ULL << RELAY_5| 1ULL << RELAY_6,
         .mode = GPIO_MODE_OUTPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,

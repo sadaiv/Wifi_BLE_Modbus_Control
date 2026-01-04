@@ -3,7 +3,7 @@
 
 #include "driver/gpio.h"
 
-#define RELAY_1 GPIO_NUM_1 
+
 
 
 #endif 

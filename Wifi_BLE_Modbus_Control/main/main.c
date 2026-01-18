@@ -41,7 +41,7 @@
 
 #include "relay_operations.h"
 #define OTADRIVE_APIKEY "bb1f3a8b-3e78-4447-9f58-6a955351ef93" 
-#define APP_VERSION "v@2.1.1.11"
+#define APP_VERSION "v@2.1.1.13"
 
 
 static int ble_spp_server_gap_event(struct ble_gap_event *event, void *arg);
